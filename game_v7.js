@@ -23,8 +23,8 @@ const jumpSound = new Audio('jump.wav');
 const collectSound = new Audio('collect.wav');
 const levelupSound = new Audio('levelup.wav');
 
-function getSafeXPosition(marginX = 60) {
-    return marginX + Math.random() * (canvas.width - 2 * marginX - 20);
+function getSafeYPosition(minY = 60, maxY = canvas.height - 100) {
+    return minY + Math.random() * (maxY - minY);
 }
 
 function isTooClose(fish, others) {
@@ -40,12 +40,8 @@ function isTooClose(fish, others) {
 function spawnBadFishes() {
     badFishes = [];
     let tries = 0;
-    const badFishMarginX = 60;  // << tämä lisätään tähän
-    while (badFishes.length < 1 && tries < 100) {  // vain yksi pilaantunut kala
-        let bf = {
-            x: getSafeXPosition(60),  // nyt X toimii oikein!
-            y: getSafeYPosition(200, canvas.height - 100)
-}
+    while (badFishes.length < 2 && tries < 100) {
+        let bf = { x: Math.random() * (canvas.width - 20), y: getSafeYPosition(200, canvas.height - 100) };
         if (!isTooClose(bf, badFishes)) {
             badFishes.push(bf);
         }
@@ -60,11 +56,12 @@ function spawnNewGoodFish() {
         tries++;
     } while (
         (isTooClose(activeFish, badFishes) ||
+        badFishes.some(bf => activeFish.y < bf.y + 20) ||
         Math.abs(activeFish.x - lastFishPos.x) < 40 ||
-        Math.abs(activeFish.y - lastFishPos.y) < 40
-        ) && tries < 100
+        Math.abs(activeFish.y - lastFishPos.y) < 40) && tries < 100
     );
 
+    // Päivitetään viimeisin paikka
     lastFishPos = { x: activeFish.x, y: activeFish.y };
 }
 
@@ -75,11 +72,8 @@ function resetGame() {
     cat = { x: 50, y: 350, width: 40, height: 40, vy: 0, grounded: true, direction: 1 };
     gameOver = false;
     gameWon = false;
-    badFishes = [];
+    spawnBadFishes();
     spawnNewGoodFish();
-    setTimeout(() => {
-        spawnBadFishes();
-    }, 1000);  // 1s viive
 }
 
 function drawCat() {
@@ -160,11 +154,8 @@ function update() {
                 return;
             } else {
                 speed += 0.5;
-                badFishes = [];
+                spawnBadFishes();
                 spawnNewGoodFish();
-                setTimeout(() => {
-                    spawnBadFishes();
-                }, 1000);  // 1s viive
                 levelUpTimer = 120;
                 levelupSound.play();
                 return;
