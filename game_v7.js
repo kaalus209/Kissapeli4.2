@@ -40,7 +40,7 @@ function isTooClose(fish, others) {
 function spawnBadFishes() {
     badFishes = [];
     let tries = 0;
-    while (badFishes.length < 2 && tries < 100) {
+    while (badFishes.length < 1 && tries < 100) {
         let bf = { x: Math.random() * (canvas.width - 20), y: getSafeYPosition(200, canvas.height - 100) };
         if (!isTooClose(bf, badFishes)) {
             badFishes.push(bf);
