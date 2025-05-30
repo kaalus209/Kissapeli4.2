@@ -40,7 +40,7 @@ function isTooClose(fish, others) {
 function spawnBadFishes() {
     badFishes = [];
     let tries = 0;
-    const badFishMarginX = 100;  // << tämä lisätään tähän
+    const badFishMarginX = 200;  // << tämä lisätään tähän
     while (badFishes.length < 1 && tries < 100) {  // vain yksi pilaantunut kala
         let bf = {
             x: badFishMarginX + Math.random() * (canvas.width - 2 * badFishMarginX - 20),
