@@ -23,8 +23,8 @@ const jumpSound = new Audio('jump.wav');
 const collectSound = new Audio('collect.wav');
 const levelupSound = new Audio('levelup.wav');
 
-function getSafeYPosition(minY = 60, maxY = canvas.height - 100) {
-    return minY + Math.random() * (maxY - minY);
+function getSafeXPosition(marginX = 60) {
+    return marginX + Math.random() * (canvas.width - 2 * marginX - 20);
 }
 
 function isTooClose(fish, others) {
@@ -43,9 +43,9 @@ function spawnBadFishes() {
     const badFishMarginX = 60;  // << tämä lisätään tähän
     while (badFishes.length < 1 && tries < 100) {  // vain yksi pilaantunut kala
         let bf = {
-            x: badFishMarginX + Math.random() * (canvas.width - 2 * badFishMarginX - 20),
+            x: getSafeXPosition(60),  // nyt X toimii oikein!
             y: getSafeYPosition(200, canvas.height - 100)
-        };
+}
         if (!isTooClose(bf, badFishes)) {
             badFishes.push(bf);
         }
