@@ -32,8 +32,9 @@ function spawnGoodFish() {
 
 // Spawnaa paha kala
 function spawnBadFish() {
+    let margin = 60; // tämä voit säätää esim. 50-80 riippuen pelin fiiliksestä
     badFish = {
-        x: Math.random() * (canvas.width - 20),
+        x: margin + Math.random() * (canvas.width - margin * 2 - 20),
         y: 200 + Math.random() * (canvas.height - 300)
     };
 }
