@@ -31,10 +31,12 @@ function spawnGoodFish() {
 }
 
 // Spawnaa paha kala
-function spawnBadFish() {
-    let margin = 60; // tämä voit säätää esim. 50-80 riippuen pelin fiiliksestä
+ffunction spawnBadFish() {
+    let minGap = 80; // kuinka paljon tilaa halutaan kissalle ohitukseen
+    let safeMargin = cat.width + minGap;
+
     badFish = {
-        x: margin + Math.random() * (canvas.width - margin * 2 - 20),
+        x: safeMargin + Math.random() * (canvas.width - safeMargin * 2 - 20),
         y: 200 + Math.random() * (canvas.height - 300)
     };
 }
