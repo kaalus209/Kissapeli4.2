@@ -1,4 +1,3 @@
-
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -57,12 +56,11 @@ function spawnNewGoodFish() {
         tries++;
     } while (
         (isTooClose(activeFish, badFishes) ||
-        badFishes.some(bf => activeFish.y < bf.y + 20) ||
         Math.abs(activeFish.x - lastFishPos.x) < 40 ||
-        Math.abs(activeFish.y - lastFishPos.y) < 40) && tries < 100
+        Math.abs(activeFish.y - lastFishPos.y) < 40
+        ) && tries < 100
     );
 
-    // Päivitetään viimeisin paikka
     lastFishPos = { x: activeFish.x, y: activeFish.y };
 }
 
@@ -73,8 +71,11 @@ function resetGame() {
     cat = { x: 50, y: 350, width: 40, height: 40, vy: 0, grounded: true, direction: 1 };
     gameOver = false;
     gameWon = false;
-    spawnBadFishes();
+    badFishes = [];
     spawnNewGoodFish();
+    setTimeout(() => {
+        spawnBadFishes();
+    }, 1000);  // 1s viive
 }
 
 function drawCat() {
@@ -155,8 +156,11 @@ function update() {
                 return;
             } else {
                 speed += 0.5;
-                spawnBadFishes();
+                badFishes = [];
                 spawnNewGoodFish();
+                setTimeout(() => {
+                    spawnBadFishes();
+                }, 1000);  // 1s viive
                 levelUpTimer = 120;
                 levelupSound.play();
                 return;
