@@ -32,11 +32,8 @@ function spawnGoodFish() {
 
 // Spawnaa paha kala
 function spawnBadFish() {
-    let minGap = 80; // kuinka paljon tilaa halutaan kissalle ohitukseen
-    let safeMargin = cat.width + minGap;
-
     badFish = {
-        x: safeMargin + Math.random() * (canvas.width - safeMargin * 2 - 20),
+        x: Math.random() * (canvas.width - 20),
         y: 200 + Math.random() * (canvas.height - 300)
     };
 }
@@ -183,4 +180,4 @@ canvas.addEventListener('click', function(e) {
 
 // Käynnistys
 resetGame();
-loop()
+loop();
