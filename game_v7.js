@@ -29,17 +29,13 @@ function spawnGoodFish() {
     };
 }
 
-// Spawnaa badFish turvallisesti reunoilta + liikkuvaksi
+// Spawnaa badFish → liikkuu koko ruudulla (x ja y)
 function spawnBadFish() {
-    let minGap = 80;
-    let safeMargin = cat.width + minGap;
-
     badFish = {
-        x: safeMargin + Math.random() * (canvas.width - safeMargin * 2 - 20),
-        y: 200 + Math.random() * (canvas.height - 300),
+        x: Math.random() * (canvas.width - 20),
+        y: Math.random() * (canvas.height - 20),
         vx: speed * (Math.random() < 0.5 ? 1 : -1),
-        safeMinX: safeMargin,
-        safeMaxX: canvas.width - safeMargin - 20
+        vy: speed * (Math.random() < 0.5 ? 1 : -1)
     };
 }
 
@@ -100,10 +96,18 @@ function update() {
     // Liikuta badFish
     if (badFish) {
         badFish.x += badFish.vx;
+        badFish.y += badFish.vy;
 
-        if (badFish.x <= badFish.safeMinX || badFish.x >= badFish.safeMaxX) {
+        // X-reuna
+        if (badFish.x <= 0 || badFish.x >= canvas.width - 20) {
             badFish.vx *= -1;
-            badFish.x = Math.max(badFish.safeMinX, Math.min(badFish.safeMaxX, badFish.x));
+            badFish.x = Math.max(0, Math.min(canvas.width - 20, badFish.x));
+        }
+
+        // Y-reuna
+        if (badFish.y <= 0 || badFish.y >= canvas.height - 20) {
+            badFish.vy *= -1;
+            badFish.y = Math.max(0, Math.min(canvas.height - 20, badFish.y));
         }
     }
 
