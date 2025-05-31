@@ -1,7 +1,6 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Pelin tilat
 let cat, activeFish, badFish, level, score, speed;
 let gravity = 1.5;
 let gameOver = false;
@@ -22,7 +21,7 @@ function resetGame() {
     spawnGoodFish();
 }
 
-// Spawnaa hyvä kala
+// Spawnaa goodFish
 function spawnGoodFish() {
     activeFish = {
         x: Math.random() * (canvas.width - 20),
@@ -30,15 +29,18 @@ function spawnGoodFish() {
     };
 }
 
-// Spawnaa paha kala
+// Spawnaa badFish turvallisesti reunoilta
 function spawnBadFish() {
+    let minGap = 80; // turvallinen väli
+    let safeMargin = cat.width + minGap;
+
     badFish = {
-        x: Math.random() * (canvas.width - 20),
+        x: safeMargin + Math.random() * (canvas.width - safeMargin * 2 - 20),
         y: 200 + Math.random() * (canvas.height - 300)
     };
 }
 
-// Piirtotoiminnot
+// Piirtofunktiot
 function drawCat() {
     ctx.fillStyle = 'orange';
     ctx.fillRect(cat.x, cat.y, cat.width, cat.height);
@@ -68,7 +70,7 @@ function drawButton() {
     ctx.fillText('Restart', 160, 250);
 }
 
-// Pelilogiikka
+// Päivitys
 function update() {
     if (gameOver || gameWon) return;
 
@@ -92,9 +94,10 @@ function update() {
         cat.grounded = true;
     }
 
-    // Tarkista hyvä kala
-    if (collides(cat, activeFish)) {
+    // Tarkista goodFish törmäys
+    if (activeFish && collides(cat, activeFish)) {
         score++;
+
         if (score % 10 === 0) {
             level++;
             if (level > maxLevels) {
@@ -102,15 +105,24 @@ function update() {
                 return;
             } else {
                 speed += 0.5;
-                spawnBadFish();
-                levelUpTimer = 60;
+                activeFish = null; // piilotetaan goodFish hetkeksi
+                levelUpTimer = 60; // näytetään "LEVEL UP!"
+
+                // spawn badFish ja goodFish 1 sekunnin päästä
+                setTimeout(() => {
+                    spawnBadFish();
+                    spawnGoodFish();
+                }, 1000);
+
+                return;
             }
         }
+
         spawnGoodFish();
     }
 
-    // Tarkista paha kala
-    if (collides(cat, badFish)) {
+    // Tarkista badFish törmäys
+    if (badFish && collides(cat, badFish)) {
         gameOver = true;
     }
 
@@ -122,12 +134,19 @@ function collides(a, b) {
            a.y < b.y + 20 && a.y + a.height > b.y;
 }
 
+// Piirto
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     drawCat();
-    drawFish();
-    drawBadFish();
+
+    if (activeFish) {
+        drawFish();
+    }
+
+    if (badFish) {
+        drawBadFish();
+    }
 
     ctx.fillStyle = 'black';
     ctx.font = '16px Arial';
@@ -170,6 +189,7 @@ document.addEventListener('keydown', function(e) {
     if (e.key === '3') jumpStrength = -30;
 });
 
+// Restart-napin käsittely
 canvas.addEventListener('click', function(e) {
     if ((gameOver || gameWon) &&
         e.offsetX >= 120 && e.offsetX <= 280 &&
