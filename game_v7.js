@@ -29,13 +29,13 @@ function spawnGoodFish() {
     };
 }
 
-// Spawnaa badFish → liikkuu koko ruudulla (x ja y)
+// Spawnaa badFish → liikkuu koko ruudulla (x ja y) + vy satunnainen
 function spawnBadFish() {
     badFish = {
         x: Math.random() * (canvas.width - 20),
         y: Math.random() * (canvas.height - 20),
         vx: speed * (Math.random() < 0.5 ? 1 : -1),
-        vy: speed * (Math.random() < 0.5 ? 1 : -1)
+        vy: (speed * (0.5 + Math.random())) * (Math.random() < 0.5 ? 1 : -1)
     };
 }
 
