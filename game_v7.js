@@ -1,57 +1,98 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Pelin tilat
-let cat, activeFish, badFish, level, score, speed;
+let cat = { x: 50, y: 350, width: 40, height: 40, vy: 0, grounded: true, direction: 1 };
+let baseSpeed = 2;
+let speed = baseSpeed;
+let level = 1;
+let maxLevels = 5;
+let score = 0;
+
+let activeFish = null;
+let lastFishPos = { x: 0, y: 0 };
+let badFishes = [];
 let gravity = 1.5;
 let gameOver = false;
 let gameWon = false;
-let maxLevels = 5;
+
 let jumpStrength = 0;
 let levelUpTimer = 0;
 
-// Aloitus
+// Äänet
+const jumpSound = new Audio('jump.wav');
+const collectSound = new Audio('collect.wav');
+const levelupSound = new Audio('levelup.wav');
+
+function getSafeYPosition(minY = 60, maxY = canvas.height - 100) {
+    return minY + Math.random() * (maxY - minY);
+}
+
+function isTooClose(fish, others) {
+    for (let o of others) {
+        const dx = fish.x - o.x;
+        const dy = fish.y - o.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < 30) return true;
+    }
+    return false;
+}
+
+function spawnBadFishes() {
+    badFishes = [];
+    let tries = 0;
+    while (badFishes.length < 2 && tries < 100) {
+        let bf = { x: Math.random() * (canvas.width - 20), y: getSafeYPosition(200, canvas.height - 100) };
+        if (!isTooClose(bf, badFishes)) {
+            badFishes.push(bf);
+        }
+        tries++;
+    }
+}
+
+function spawnNewGoodFish() {
+    let tries = 0;
+    do {
+        activeFish = { x: Math.random() * (canvas.width - 20), y: getSafeYPosition(60, canvas.height - 100) };
+        tries++;
+    } while (
+        (isTooClose(activeFish, badFishes) ||
+        badFishes.some(bf => activeFish.y < bf.y + 20) ||
+        Math.abs(activeFish.x - lastFishPos.x) < 40 ||
+        Math.abs(activeFish.y - lastFishPos.y) < 40) && tries < 100
+    );
+
+    // Päivitetään viimeisin paikka
+    lastFishPos = { x: activeFish.x, y: activeFish.y };
+}
+
 function resetGame() {
-    cat = { x: 50, y: 350, width: 40, height: 40, vy: 0, grounded: true, direction: 1 };
-    level = 1;
     score = 0;
-    speed = 2;
+    level = 1;
+    speed = baseSpeed;
+    cat = { x: 50, y: 350, width: 40, height: 40, vy: 0, grounded: true, direction: 1 };
     gameOver = false;
     gameWon = false;
-    spawnBadFish();
-    spawnGoodFish();
+    spawnBadFishes();
+    spawnNewGoodFish();
 }
 
-// Spawnaa hyvä kala
-function spawnGoodFish() {
-    activeFish = {
-        x: Math.random() * (canvas.width - 20),
-        y: 60 + Math.random() * (canvas.height - 160)
-    };
-}
-
-// Spawnaa paha kala
-function spawnBadFish() {
-    badFish = {
-        x: Math.random() * (canvas.width - 20),
-        y: 200 + Math.random() * (canvas.height - 300)
-    };
-}
-
-// Piirtotoiminnot
 function drawCat() {
     ctx.fillStyle = 'orange';
     ctx.fillRect(cat.x, cat.y, cat.width, cat.height);
 }
 
 function drawFish() {
-    ctx.fillStyle = 'blue';
-    ctx.fillRect(activeFish.x, activeFish.y, 20, 20);
+    if (activeFish) {
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(activeFish.x, activeFish.y, 20, 20);
+    }
 }
 
-function drawBadFish() {
-    ctx.fillStyle = 'green';
-    ctx.fillRect(badFish.x, badFish.y, 20, 20);
+function drawBadFishes() {
+    for (let bf of badFishes) {
+        ctx.fillStyle = 'green';
+        ctx.fillRect(bf.x, bf.y, 20, 20);
+    }
 }
 
 function drawText(text, x = 100, y = 180) {
@@ -68,19 +109,27 @@ function drawButton() {
     ctx.fillText('Restart', 160, 250);
 }
 
-// Pelilogiikka
+canvas.addEventListener('click', function(e) {
+    if ((gameOver || gameWon) &&
+        e.offsetX >= 120 && e.offsetX <= 280 &&
+        e.offsetY >= 220 && e.offsetY <= 270) {
+        resetGame();
+    }
+});
+
 function update() {
     if (gameOver || gameWon) return;
 
-    // Liikuta kissaa
     cat.x += speed * cat.direction;
-    cat.x = Math.max(0, Math.min(canvas.width - cat.width, cat.x));
 
-    // Hyppy
+    if (cat.x < 0) cat.x = 0;
+    if (cat.x + cat.width > canvas.width) cat.x = canvas.width - cat.width;
+
     if (jumpStrength !== 0 && cat.grounded) {
         cat.vy = jumpStrength;
         cat.grounded = false;
         jumpStrength = 0;
+        jumpSound.play();
     }
 
     cat.y += cat.vy;
@@ -92,9 +141,12 @@ function update() {
         cat.grounded = true;
     }
 
-    // Tarkista hyvä kala
-    if (collides(cat, activeFish)) {
+    if (activeFish &&
+        cat.x < activeFish.x + 20 && cat.x + cat.width > activeFish.x &&
+        cat.y < activeFish.y + 20 && cat.y + cat.height > activeFish.y) {
         score++;
+        collectSound.play();
+
         if (score % 10 === 0) {
             level++;
             if (level > maxLevels) {
@@ -102,32 +154,32 @@ function update() {
                 return;
             } else {
                 speed += 0.5;
-                spawnBadFish();
-                levelUpTimer = 60;
+                spawnBadFishes();
+                spawnNewGoodFish();
+                levelUpTimer = 120;
+                levelupSound.play();
+                return;
             }
+        } else {
+            spawnNewGoodFish();
         }
-        spawnGoodFish();
     }
 
-    // Tarkista paha kala
-    if (collides(cat, badFish)) {
-        gameOver = true;
+    for (let bf of badFishes) {
+        if (cat.x < bf.x + 20 && cat.x + cat.width > bf.x &&
+            cat.y < bf.y + 20 && cat.y + cat.height > bf.y) {
+            gameOver = true;
+        }
     }
 
     if (levelUpTimer > 0) levelUpTimer--;
 }
 
-function collides(a, b) {
-    return a.x < b.x + 20 && a.x + a.width > b.x &&
-           a.y < b.y + 20 && a.y + a.height > b.y;
-}
-
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     drawCat();
     drawFish();
-    drawBadFish();
+    drawBadFishes();
 
     ctx.fillStyle = 'black';
     ctx.font = '16px Arial';
@@ -155,12 +207,11 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-// Kontrollit
-document.getElementById('leftBtn').addEventListener('click', () => cat.direction = -1);
-document.getElementById('rightBtn').addEventListener('click', () => cat.direction = 1);
-document.getElementById('jumpLowBtn').addEventListener('click', () => jumpStrength = -14);
-document.getElementById('jumpMedBtn').addEventListener('click', () => jumpStrength = -20);
-document.getElementById('jumpHighBtn').addEventListener('click', () => jumpStrength = -30);
+document.getElementById('leftBtn').addEventListener('touchstart', () => cat.direction = -1);
+document.getElementById('rightBtn').addEventListener('touchstart', () => cat.direction = 1);
+document.getElementById('jumpLowBtn').addEventListener('touchstart', () => jumpStrength = -14);
+document.getElementById('jumpMedBtn').addEventListener('touchstart', () => jumpStrength = -20);
+document.getElementById('jumpHighBtn').addEventListener('touchstart', () => jumpStrength = -30);
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'ArrowLeft') cat.direction = -1;
@@ -170,14 +221,5 @@ document.addEventListener('keydown', function(e) {
     if (e.key === '3') jumpStrength = -30;
 });
 
-canvas.addEventListener('click', function(e) {
-    if ((gameOver || gameWon) &&
-        e.offsetX >= 120 && e.offsetX <= 280 &&
-        e.offsetY >= 220 && e.offsetY <= 270) {
-        resetGame();
-    }
-});
-
-// Käynnistys
 resetGame();
 loop();
