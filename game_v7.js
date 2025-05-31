@@ -29,14 +29,17 @@ function spawnGoodFish() {
     };
 }
 
-// Spawnaa badFish turvallisesti reunoilta
+// Spawnaa badFish turvallisesti reunoilta + liikkuvaksi
 function spawnBadFish() {
-    let minGap = 80; // turvallinen väli
+    let minGap = 80;
     let safeMargin = cat.width + minGap;
 
     badFish = {
         x: safeMargin + Math.random() * (canvas.width - safeMargin * 2 - 20),
-        y: 200 + Math.random() * (canvas.height - 300)
+        y: 200 + Math.random() * (canvas.height - 300),
+        vx: speed * (Math.random() < 0.5 ? 1 : -1),
+        safeMinX: safeMargin,
+        safeMaxX: canvas.width - safeMargin - 20
     };
 }
 
@@ -94,6 +97,16 @@ function update() {
         cat.grounded = true;
     }
 
+    // Liikuta badFish
+    if (badFish) {
+        badFish.x += badFish.vx;
+
+        if (badFish.x <= badFish.safeMinX || badFish.x >= badFish.safeMaxX) {
+            badFish.vx *= -1;
+            badFish.x = Math.max(badFish.safeMinX, Math.min(badFish.safeMaxX, badFish.x));
+        }
+    }
+
     // Tarkista goodFish törmäys
     if (activeFish && collides(cat, activeFish)) {
         score++;
@@ -105,8 +118,8 @@ function update() {
                 return;
             } else {
                 speed += 0.5;
-                activeFish = null; // piilotetaan goodFish hetkeksi
-                levelUpTimer = 60; // näytetään "LEVEL UP!"
+                activeFish = null;
+                levelUpTimer = 60;
 
                 // spawn badFish ja goodFish 1 sekunnin päästä
                 setTimeout(() => {
