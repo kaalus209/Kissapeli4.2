@@ -31,7 +31,7 @@ function spawnGoodFish() {
 }
 
 // Spawnaa paha kala
-ffunction spawnBadFish() {
+function spawnBadFish() {
     let minGap = 80; // kuinka paljon tilaa halutaan kissalle ohitukseen
     let safeMargin = cat.width + minGap;
 
